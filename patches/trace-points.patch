@@ -1,0 +1,242 @@
+diff --git a/engine/packages/depot-client/src/filesystem/backlog.rs b/engine/packages/depot-client/src/filesystem/backlog.rs
+index e3f8367..c733053 100644
+--- a/engine/packages/depot-client/src/filesystem/backlog.rs
++++ b/engine/packages/depot-client/src/filesystem/backlog.rs
+@@ -82,11 +82,24 @@ impl Filesystem {
+ 	/// observed applied position. Its rows are not needed, and a refusal or timeout leaves the
+ 	/// observed position as it is.
+ 	pub(super) async fn observe_applied(&self, state: &State, deadline: u64) {
+-		let _ = state
++		// [TRACE-bk1]
++		let started = std::time::Instant::now();
++		let before = self.cold_store.observed_applied();
++		let result = state
+ 			.cold
+ 			.snapshot
+ 			.get_inode(depot_fs_core::ROOT_INO, state.last_seq, deadline)
+ 			.await;
++		tracing::info!(
++			vol = %self.key.trace_id(),
++			last_seq = state.last_seq,
++			floor = state.cold.snapshot.position().volume_seq,
++			applied_before = before,
++			applied_after = self.cold_store.observed_applied(),
++			elapsed_us = started.elapsed().as_micros() as u64,
++			result = %match &result { Ok(_) => "ok".to_string(), Err(e) => format!("err: {e:?}") },
++			"[TRACE-bk1] probe"
++		);
+ 	}
+ 
+ 	/// Moves the floor to the newest layer the maintainer has reported applied, so the layers a
+@@ -154,6 +167,16 @@ impl Filesystem {
+ 		if !over_now && held <= PROBE_HELD_LAYERS {
+ 			return Ok(());
+ 		}
++		// [TRACE-bk1]
++		tracing::info!(
++			vol = %self.key.trace_id(),
++			last_seq = state.last_seq,
++			applied,
++			held,
++			over_now,
++			probe_due = self.now()?.boot_ms >= state.backlog.probe_after_boot_ms,
++			"[TRACE-bk1] admission over the probe line"
++		);
+ 		let now = self.now()?.boot_ms;
+ 		if now >= state.backlog.probe_after_boot_ms {
+ 			state.backlog.probe_after_boot_ms = now.saturating_add(PROBE_INTERVAL_MS);
+@@ -168,6 +191,14 @@ impl Filesystem {
+ 		crate::metrics::FS_OVERLOADED
+ 			.with_label_values(&["unapplied_backlog"])
+ 			.inc();
++		// [TRACE-bk1]
++		tracing::info!(
++			vol = %self.key.trace_id(),
++			last_seq = state.last_seq,
++			applied,
++			unapplied_bytes = state.backlog.unapplied(applied),
++			"[TRACE-bk1] refusing"
++		);
+ 		tracing::debug!(
+ 			key = ?self.key,
+ 			limit,
+diff --git a/engine/packages/depot-client/src/filesystem/remote.rs b/engine/packages/depot-client/src/filesystem/remote.rs
+index 51775a4..9845035 100644
+--- a/engine/packages/depot-client/src/filesystem/remote.rs
++++ b/engine/packages/depot-client/src/filesystem/remote.rs
+@@ -237,6 +237,8 @@ impl RemoteColdStore {
+ 			self.clock.as_ref(),
+ 		)
+ 		.await?;
++		// [TRACE-bk1]
++		tracing::info!(vol = %volume.trace_id(), applied, position = position.volume_seq, "[TRACE-bk1] opened snapshot");
+ 		self.applied.fetch_max(applied, Ordering::AcqRel);
+ 		// Only rows the maintainer says it read count; an open that got no prefetch back
+ 		// learns nothing about absent rows.
+@@ -495,14 +497,26 @@ impl ClaimSnapshot {
+ 			client_epoch: Some(epoch),
+ 			operation: operation(at),
+ 		};
+-		let response = match routed_read(
++		// [TRACE-bk1]
++		let started = std::time::Instant::now();
++		let response = routed_read(
+ 			self.transport.as_ref(),
+ 			self.clock.as_ref(),
+ 			request,
+ 			deadline_boot_ms,
+ 		)
+-		.await
+-		{
++		.await;
++		if let Err(error) = &response {
++			tracing::info!(
++				vol = %self.volume.trace_id(),
++				through,
++				floor = self.floor.volume_seq,
++				elapsed_us = started.elapsed().as_micros() as u64,
++				error = ?error,
++				"[TRACE-bk1] claim read failed"
++			);
++		}
++		let response = match response {
+ 			Err(Error::Fenced) => {
+ 				crate::fences::count(crate::fences::FenceReason::RemoteReadFenced);
+ 				self.journal.fence();
+@@ -517,6 +531,17 @@ impl ClaimSnapshot {
+ 			return Err(corrupt!());
+ 		}
+ 		let applied = applied_position(&rows.applied)?;
++		// [TRACE-bk1]
++		tracing::info!(
++			vol = %self.volume.trace_id(),
++			through,
++			floor = self.floor.volume_seq,
++			as_of = rows.as_of,
++			applied = applied.volume_seq,
++			store_applied = self.applied.load(Ordering::Acquire),
++			elapsed_us = started.elapsed().as_micros() as u64,
++			"[TRACE-bk1] claim read reply"
++		);
+ 		validate_claim_read(
+ 			self.journal.as_ref(),
+ 			&self.volume,
+diff --git a/engine/packages/depot-types/src/volume_log_key.rs b/engine/packages/depot-types/src/volume_log_key.rs
+index ff66edd..c3b1c73 100644
+--- a/engine/packages/depot-types/src/volume_log_key.rs
++++ b/engine/packages/depot-types/src/volume_log_key.rs
+@@ -159,3 +159,12 @@ pub fn partition_key_hash(volume_key: &crate::VolumeKey) -> crate::PartitionKeyH
+ pub fn listing_order(key: &VolumeLogKey) -> (crate::PartitionKeyHash, &VolumeLogKey) {
+ 	(partition_key_hash(&key.0.volume_key), key)
+ }
++
++impl VolumeLogKey {
++	/// [TRACE-bk1] A short id of this volume for trace logs, the same in every crate.
++	pub fn trace_id(&self) -> String {
++		let mut h = std::collections::hash_map::DefaultHasher::new();
++		self.hash(&mut h);
++		format!("{:08x}", h.finish() as u32)
++	}
++}
+diff --git a/engine/packages/depot-worker/src/filesystem/read.rs b/engine/packages/depot-worker/src/filesystem/read.rs
+index 5c24897..9602ee6 100644
+--- a/engine/packages/depot-worker/src/filesystem/read.rs
++++ b/engine/packages/depot-worker/src/filesystem/read.rs
+@@ -163,8 +163,19 @@ impl FilesystemStore {
+ 			return Err(Error::Corrupt);
+ 		}
+ 		let (record, _) = self.read_record(key, record).await?;
++		// [TRACE-bk1]
++		let given = applied.as_ref().map(|a| a.volume_seq);
+ 		let applied = applied.unwrap_or_else(|| record.cold.clone());
+ 		let floor = &read.floor;
++		tracing::info!(
++			vol = %key.trace_id(),
++			given = ?given,
++			cold = record.cold.volume_seq,
++			applied = applied.volume_seq,
++			floor = floor.volume_seq,
++			through = read.through,
++			"[TRACE-bk1] maintainer claim read"
++		);
+ 		if applied.client_epoch > client_epoch
+ 			|| (floor.volume_seq == record.cold.volume_seq && *floor != record.cold)
+ 			|| (floor.volume_seq == applied.volume_seq && *floor != applied)
+diff --git a/engine/packages/depot-worker/src/tablet_maintainer_machine/state/filesystem.rs b/engine/packages/depot-worker/src/tablet_maintainer_machine/state/filesystem.rs
+index 348610d..cb9d8c0 100644
+--- a/engine/packages/depot-worker/src/tablet_maintainer_machine/state/filesystem.rs
++++ b/engine/packages/depot-worker/src/tablet_maintainer_machine/state/filesystem.rs
+@@ -1271,6 +1271,8 @@ pub(crate) fn drive(state: &mut MaintainerState, fx: &mut Effects) {
+ 		}
+ 	}
+ 	for (key, worker, proof, previous) in selected {
++		// [TRACE-bk1]
++		tracing::info!(vol = %key.trace_id(), first = previous.volume_seq + 1, worker = ?worker, "[TRACE-bk1] maintainer reads entries");
+ 		if !state.filesystem.waiting_opens.contains_key(&key) {
+ 			state.filesystem.read_after = Some(key.clone());
+ 		}
+@@ -1308,6 +1310,8 @@ pub(crate) fn read(
+ 	fx: &mut Effects,
+ ) {
+ 	let Ok(StorageWorkerResponse::ReadVolumeLogEntriesResponse(mut page)) = result else {
++		// [TRACE-bk1]
++		tracing::info!(vol = %key.trace_id(), previous = previous.volume_seq, "[TRACE-bk1] maintainer entries read failed");
+ 		source_failed(state, &key, worker);
+ 		retry(state, key, fx);
+ 		return;
+@@ -1334,8 +1338,21 @@ pub(crate) fn read(
+ 	// Apply stops at the position of the volume's next recovered maintainer log op, and at
+ 	// its pin floor while a fork pin waits for it.
+ 	let limit = apply_through_limit(state, &key);
++	// [TRACE-bk1]
++	let read_entries = page.entries.len();
++	let read_last = page.entries.last().map(|e| e.volume_seq);
+ 	page.entries
+ 		.retain(|e| e.volume_seq <= committed && e.volume_seq <= limit);
++	tracing::info!(
++		vol = %key.trace_id(),
++		previous = previous.volume_seq,
++		read_entries,
++		read_last = ?read_last,
++		committed,
++		limit,
++		kept = page.entries.len(),
++		"[TRACE-bk1] maintainer entries arrived"
++	);
+ 	super::cold::observe(state, &key, worker, page.state);
+ 	if page.entries.is_empty() {
+ 		retry(state, key, fx);
+@@ -1746,6 +1763,8 @@ pub(crate) fn release_held_applies(state: &mut MaintainerState) {
+ }
+ 
+ fn retry(state: &mut MaintainerState, key: VolumeLogKey, fx: &mut Effects) {
++	// [TRACE-bk1]
++	tracing::info!(vol = %key.trace_id(), "[TRACE-bk1] maintainer apply retry");
+ 	if let Some(v) = state.filesystem.volumes.get_mut(&key) {
+ 		v.retry_wait = true;
+ 		fx.arm_timer_after(
+@@ -1836,6 +1855,15 @@ pub(crate) fn dispatch_apply(state: &mut MaintainerState, key: VolumeLogKey, fx:
+ 		})
+ 		.map(|(worker, proof)| (worker.clone(), proof.clone()));
+ 
++	// [TRACE-bk1]
++	tracing::info!(
++		vol = %key.trace_id(),
++		through = page.through.volume_seq,
++		entries = page.entries.len(),
++		first_pending = ?first_pending,
++		source = source.is_some(),
++		"[TRACE-bk1] maintainer apply dispatch"
++	);
+ 	if first_pending.is_some() && source.is_none() {
+ 		// No writes have been dispatched. Re-fetch this bounded page after fresh
+ 		// replica observations; resolver and applied/cold positions stay unchanged.
+@@ -1987,6 +2015,8 @@ pub(crate) fn applied(
+ 		volume.retention_checkpoint_seq = None;
+ 	}
+ 	let applied_seq = through.volume_seq;
++	// [TRACE-bk1]
++	tracing::info!(vol = %key.trace_id(), from = volume.applied.volume_seq, through = applied_seq, "[TRACE-bk1] maintainer applied");
+ 	let entries = applied_seq.saturating_sub(volume.applied.volume_seq);
+ 	if entries > 0 {
+ 		volume.entry_bytes = u32::try_from(applied_bytes / entries).unwrap_or(u32::MAX);

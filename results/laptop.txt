@@ -1,0 +1,60 @@
+##### stock back-to-back 1
+$ rm -rf .data && RIVETKIT_STORAGE_PATH=.data RIVET_RUN_ENGINE_PORT=7420 RIVET_RUN_SERVICES=0 bun src/repro.ts
+engine http://127.0.0.1:7420, document doc-1fa8e09b, typing 1300 characters
+slow keystroke #1019: 1019 ms, started 2026-11-25T16:26:24.780Z
+
+1300 keystrokes in 3.39 s (384/s): p50 1.7 ms, p95 2.4 ms, max 1019.0 ms
+1 keystroke(s) over 100 ms
+document at version 1300, 1300 characters
+[engine] ts=2026-11-25T16:26:24.781867202Z level=debug message="refusing a filesystem write while the tablet\'s apply is behind; a slow cold store or compaction is likely holding back memtable flushes" key=… limit=268435456
+[engine] ts=2026-11-25T16:26:25.282602021Z level=debug message="refusing a filesystem write while the tablet\'s apply is behind; a slow cold store or compaction is likely holding back memtable flushes" key=… limit=268435456
+[engine] ts=2026-11-25T16:26:25.781441499Z level=debug message="dropped expired overlay notes; misses on their rows read at or past them" dropped=1 through=1 committed=1025 applied=0
+(engine log: .data/.rivetkit/var/logs/rivet-engine)
+##### fixed back-to-back 1
+$ rm -rf .data && RIVETKIT_STORAGE_PATH=.data RIVET_RUN_ENGINE_PORT=7420 RIVET_RUN_SERVICES=0 bun src/repro.ts
+engine http://127.0.0.1:7420, document doc-be3372ef, typing 1300 characters
+
+1300 keystrokes in 2.57 s (506/s): p50 1.9 ms, p95 2.6 ms, max 6.5 ms
+0 keystroke(s) over 100 ms
+document at version 1300, 1300 characters
+(engine log: .data/.rivetkit/var/logs/rivet-engine)
+##### stock back-to-back 2
+$ rm -rf .data && RIVETKIT_STORAGE_PATH=.data RIVET_RUN_ENGINE_PORT=7420 RIVET_RUN_SERVICES=0 bun src/repro.ts
+engine http://127.0.0.1:7420, document doc-0b4fde8d, typing 1300 characters
+slow keystroke #1019: 1018 ms, started 2026-11-25T16:26:37.262Z
+
+1300 keystrokes in 3.30 s (394/s): p50 1.7 ms, p95 2.2 ms, max 1017.9 ms
+1 keystroke(s) over 100 ms
+document at version 1300, 1300 characters
+[engine] ts=2026-11-25T16:26:37.263534222Z level=debug message="refusing a filesystem write while the tablet\'s apply is behind; a slow cold store or compaction is likely holding back memtable flushes" key=… limit=268435456
+[engine] ts=2026-11-25T16:26:37.765253382Z level=debug message="refusing a filesystem write while the tablet\'s apply is behind; a slow cold store or compaction is likely holding back memtable flushes" key=… limit=268435456
+[engine] ts=2026-11-25T16:26:38.26135532Z level=debug message="dropped expired overlay notes; misses on their rows read at or past them" dropped=1 through=1 committed=1025 applied=0
+(engine log: .data/.rivetkit/var/logs/rivet-engine)
+##### fixed back-to-back 2
+$ rm -rf .data && RIVETKIT_STORAGE_PATH=.data RIVET_RUN_ENGINE_PORT=7420 RIVET_RUN_SERVICES=0 bun src/repro.ts
+engine http://127.0.0.1:7420, document doc-cfa15ca1, typing 1300 characters
+
+1300 keystrokes in 2.39 s (543/s): p50 1.8 ms, p95 2.2 ms, max 5.3 ms
+0 keystroke(s) over 100 ms
+document at version 1300, 1300 characters
+(engine log: .data/.rivetkit/var/logs/rivet-engine)
+##### stock back-to-back 3
+$ rm -rf .data && RIVETKIT_STORAGE_PATH=.data RIVET_RUN_ENGINE_PORT=7420 RIVET_RUN_SERVICES=0 bun src/repro.ts
+engine http://127.0.0.1:7420, document doc-07cc8a92, typing 1300 characters
+slow keystroke #1019: 1019 ms, started 2026-11-25T16:26:49.825Z
+
+1300 keystrokes in 3.33 s (390/s): p50 1.7 ms, p95 2.2 ms, max 1019.0 ms
+1 keystroke(s) over 100 ms
+document at version 1300, 1300 characters
+[engine] ts=2026-11-25T16:26:49.827066252Z level=debug message="refusing a filesystem write while the tablet\'s apply is behind; a slow cold store or compaction is likely holding back memtable flushes" key=… limit=268435456
+[engine] ts=2026-11-25T16:26:50.329359803Z level=debug message="refusing a filesystem write while the tablet\'s apply is behind; a slow cold store or compaction is likely holding back memtable flushes" key=… limit=268435456
+[engine] ts=2026-11-25T16:26:50.826850446Z level=debug message="dropped expired overlay notes; misses on their rows read at or past them" dropped=1 through=1 committed=1025 applied=0
+(engine log: .data/.rivetkit/var/logs/rivet-engine)
+##### fixed back-to-back 3
+$ rm -rf .data && RIVETKIT_STORAGE_PATH=.data RIVET_RUN_ENGINE_PORT=7420 RIVET_RUN_SERVICES=0 bun src/repro.ts
+engine http://127.0.0.1:7420, document doc-bbecd955, typing 1300 characters
+
+1300 keystrokes in 2.39 s (544/s): p50 1.8 ms, p95 2.3 ms, max 8.3 ms
+0 keystroke(s) over 100 ms
+document at version 1300, 1300 characters
+(engine log: .data/.rivetkit/var/logs/rivet-engine)

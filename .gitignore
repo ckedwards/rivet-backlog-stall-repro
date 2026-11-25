@@ -1,0 +1,3 @@
+node_modules/
+# the local engine's data and logs (RIVETKIT_STORAGE_PATH); wiped by every `bun run repro`
+.data/

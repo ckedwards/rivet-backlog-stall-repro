@@ -1,0 +1,22 @@
+diff --git a/engine/packages/depot-client/src/filesystem/backlog.rs b/engine/packages/depot-client/src/filesystem/backlog.rs
+index e3f8367..9f67534 100644
+--- a/engine/packages/depot-client/src/filesystem/backlog.rs
++++ b/engine/packages/depot-client/src/filesystem/backlog.rs
+@@ -82,9 +82,14 @@ impl Filesystem {
+ 	/// observed applied position. Its rows are not needed, and a refusal or timeout leaves the
+ 	/// observed position as it is.
+ 	pub(super) async fn observe_applied(&self, state: &State, deadline: u64) {
+-		let _ = state
+-			.cold
+-			.snapshot
++		// Through the store's claim snapshot at the floor, not `state.cold.snapshot`: a new
++		// volume's cold view is an `EmptyColdSnapshot`, which answers every read locally, so a
++		// probe through it never reaches the maintainer and the applied position stays at 0
++		// until the overlay's notes expire.
++		let probe = self
++			.cold_store
++			.claim_snapshot(self.key.clone(), state.cold.snapshot.position().clone());
++		let _ = probe
+ 			.get_inode(depot_fs_core::ROOT_INO, state.last_seq, deadline)
+ 			.await;
+ 	}

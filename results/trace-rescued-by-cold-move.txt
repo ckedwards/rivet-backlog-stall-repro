@@ -1,0 +1,50 @@
+# [TRACE-bk1] a traced engine (3.1.1 + patches/trace-points.patch) slows this repro to ~164 keys/s; at that pace the volume's first move to cold (cold=289) lands before commit 1,025 and the probe works: no stall. Volumes interleaved.
+# Maintainer apply lines are thinned to one in ten; every probe, claim read and refusal is kept.
+ts=2026-11-25T16:27:11.772169877Z level=info message="[TRACE-bk1] maintainer reads entries" vol=235ff3ae first=1
+ts=2026-11-25T16:27:11.793070218Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=04824b85 through=4 entries=4 first_pending=None source=true
+ts=2026-11-25T16:27:11.793488366Z level=info message="[TRACE-bk1] maintainer applied" vol=5a81fb44 from=0 through=3
+ts=2026-11-25T16:27:11.930833805Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=10 entries=5 first_pending=None source=true
+ts=2026-11-25T16:27:12.470491448Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=44 entries=8 first_pending=None source=true
+ts=2026-11-25T16:27:12.999776663Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=76 entries=7 first_pending=None source=true
+ts=2026-11-25T16:27:13.522203697Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=117 entries=9 first_pending=None source=true
+ts=2026-11-25T16:27:14.059370482Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=148 entries=3 first_pending=None source=true
+ts=2026-11-25T16:27:14.589139514Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=184 entries=8 first_pending=None source=true
+ts=2026-11-25T16:27:14.901931005Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=206 entries=8 first_pending=None source=true
+ts=2026-11-25T16:27:15.243591239Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=223 entries=5 first_pending=None source=true
+ts=2026-11-25T16:27:15.685485622Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=246 entries=4 first_pending=None source=true
+ts=2026-11-25T16:27:16.249592407Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=276 entries=6 first_pending=None source=true
+ts=2026-11-25T16:27:16.708466578Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=295 entries=4 first_pending=None source=true
+ts=2026-11-25T16:27:17.038428182Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=355 entries=4 first_pending=None source=true
+ts=2026-11-25T16:27:17.231220704Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=393 entries=1 first_pending=None source=true
+ts=2026-11-25T16:27:17.326955696Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=414
+ts=2026-11-25T16:27:17.430585969Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=435 entries=1 first_pending=None source=true
+ts=2026-11-25T16:27:17.536677196Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=457
+ts=2026-11-25T16:27:17.734704776Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=494 entries=20 first_pending=None source=true
+ts=2026-11-25T16:27:18.242393926Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=595 entries=18 first_pending=None source=true
+ts=2026-11-25T16:27:18.346351693Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=632
+ts=2026-11-25T16:27:18.446175372Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=679 entries=1 first_pending=None source=true
+ts=2026-11-25T16:27:18.646272164Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=783 entries=52 first_pending=None source=true
+ts=2026-11-25T16:27:18.746345496Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=786
+ts=2026-11-25T16:27:18.748857971Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=842 entries=1 first_pending=None source=true
+ts=2026-11-25T16:27:18.847878208Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=891
+ts=2026-11-25T16:27:18.991665764Z level=info message="[TRACE-bk1] maintainer claim read" vol=519c8255 given=Some(906) cold=289 applied=906 floor=289 through=922
+ts=2026-11-25T16:27:18.99199728Z level=info message="[TRACE-bk1] claim read reply" vol=519c8255 through=922 floor=289 as_of=906 applied=906 store_applied=0 elapsed_us=518
+ts=2026-11-25T16:27:18.992009887Z level=info message="[TRACE-bk1] probe" vol=519c8255 last_seq=922 floor=289 applied_before=0 applied_after=906 elapsed_us=535 result=ok
+ts=2026-11-25T16:27:19.049215771Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=952 entries=5 first_pending=None source=true
+ts=2026-11-25T16:27:19.152730966Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=1012
+ts=2026-11-25T16:27:19.252457808Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=1065 entries=1 first_pending=None source=true
+ts=2026-11-25T16:27:19.352011662Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=1116
+ts=2026-11-25T16:27:19.550203905Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=1164
+ts=2026-11-25T16:27:19.552558879Z level=info message="[TRACE-bk1] maintainer apply dispatch" vol=519c8255 through=1220 entries=1 first_pending=None source=true
+ts=2026-11-25T16:27:19.652425065Z level=info message="[TRACE-bk1] maintainer reads entries" vol=519c8255 first=1277
+ts=2026-11-25T16:27:20.040945743Z level=info message="[TRACE-bk1] maintainer claim read" vol=235ff3ae given=Some(5) cold=5 applied=5 floor=5 through=6
+ts=2026-11-25T16:27:20.041250858Z level=info message="[TRACE-bk1] claim read reply" vol=235ff3ae through=6 floor=5 as_of=5 applied=5 store_applied=0 elapsed_us=755
+ts=2026-11-25T16:27:20.041468652Z level=info message="[TRACE-bk1] maintainer claim read" vol=235ff3ae given=Some(5) cold=5 applied=5 floor=5 through=6
+ts=2026-11-25T16:27:20.04161593Z level=info message="[TRACE-bk1] claim read reply" vol=235ff3ae through=6 floor=5 as_of=5 applied=5 store_applied=5 elapsed_us=248
+ts=2026-11-25T16:27:20.04172207Z level=info message="[TRACE-bk1] maintainer claim read" vol=235ff3ae given=Some(5) cold=5 applied=5 floor=5 through=6
+ts=2026-11-25T16:27:20.041902312Z level=info message="[TRACE-bk1] claim read reply" vol=235ff3ae through=6 floor=5 as_of=5 applied=5 store_applied=5 elapsed_us=241
+ts=2026-11-25T16:27:20.048888049Z level=info message="[TRACE-bk1] maintainer reads entries" vol=7481d736 first=3
+ts=2026-11-25T16:27:20.049472226Z level=info message="[TRACE-bk1] maintainer applied" vol=5a81fb44 from=5 through=6
+# admissions past the probe line (first, last):
+ts=2026-11-25T16:27:18.991457836Z level=info message="[TRACE-bk1] admission over the probe line" vol=519c8255 last_seq=922 applied=0 held=257 over_now=false probe_due=true
+ts=2026-11-25T16:27:18.991457836Z level=info message="[TRACE-bk1] admission over the probe line" vol=519c8255 last_seq=922 applied=0 held=257 over_now=false probe_due=true

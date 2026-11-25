@@ -1,0 +1,19 @@
+# [TRACE-bk1] lines for the stalled document's volume (vol=4fcd47d3): engine 3.1.1 + patches/trace-points.patch, this repro back to back (365 keys/s).
+# 'maintainer applied' lines thinned to one in ten (the maintainer applies every ~100 ms throughout); its reads and dispatches are left out; every probe, claim read and refusal is kept.
+ts=2026-11-25T16:27:52.487320322Z level=info message="[TRACE-bk1] maintainer applied" vol=4fcd47d3 from=0 through=5
+ts=2026-11-25T16:27:52.958560009Z level=info message="[TRACE-bk1] maintainer applied" vol=4fcd47d3 from=172 through=222
+ts=2026-11-25T16:27:53.260599173Z level=info message="[TRACE-bk1] maintainer applied" vol=4fcd47d3 from=383 through=384
+ts=2026-11-25T16:27:53.663432475Z level=info message="[TRACE-bk1] maintainer applied" vol=4fcd47d3 from=543 through=592
+ts=2026-11-25T16:27:53.966568718Z level=info message="[TRACE-bk1] maintainer applied" vol=4fcd47d3 from=753 through=754
+ts=2026-11-25T16:27:54.067340313Z level=info message="[TRACE-bk1] probe" vol=4fcd47d3 last_seq=806 floor=0 applied_before=0 applied_after=0 elapsed_us=2 result=ok
+ts=2026-11-25T16:27:54.267449623Z level=info message="[TRACE-bk1] maintainer applied" vol=4fcd47d3 from=914 through=915
+ts=2026-11-25T16:27:54.48208043Z level=info message="[TRACE-bk1] refusing" vol=4fcd47d3 last_seq=1025 applied=0 unapplied_bytes=4422666
+ts=2026-11-25T16:27:54.983540076Z level=info message="[TRACE-bk1] probe" vol=4fcd47d3 last_seq=1025 floor=0 applied_before=0 applied_after=0 elapsed_us=1 result=ok
+ts=2026-11-25T16:27:54.983545461Z level=info message="[TRACE-bk1] refusing" vol=4fcd47d3 last_seq=1025 applied=0 unapplied_bytes=4422666
+ts=2026-11-25T16:27:55.48470684Z level=info message="[TRACE-bk1] maintainer claim read" vol=4fcd47d3 given=Some(1025) cold=0 applied=1025 floor=1 through=1025
+ts=2026-11-25T16:27:55.484902878Z level=info message="[TRACE-bk1] claim read reply" vol=4fcd47d3 through=1025 floor=1 as_of=1025 applied=1025 store_applied=0 elapsed_us=464
+ts=2026-11-25T16:27:55.602345901Z level=info message="[TRACE-bk1] maintainer applied" vol=4fcd47d3 from=1072 through=1073
+ts=2026-11-25T16:27:56.003525705Z level=info message="[TRACE-bk1] maintainer applied" vol=4fcd47d3 from=1230 through=1284
+# admissions past the probe line (first, last):
+ts=2026-11-25T16:27:54.067322469Z level=info message="[TRACE-bk1] admission over the probe line" vol=4fcd47d3 last_seq=806 applied=0 held=280 over_now=false probe_due=true
+ts=2026-11-25T16:27:54.983511878Z level=info message="[TRACE-bk1] admission over the probe line" vol=4fcd47d3 last_seq=1025 applied=0 held=765 over_now=true probe_due=true

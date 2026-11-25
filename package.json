@@ -1,0 +1,16 @@
+{
+  "name": "rivet-backlog-stall-repro",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "repro": "rm -rf .data && RIVETKIT_STORAGE_PATH=.data RIVET_RUN_ENGINE_PORT=7420 RIVET_RUN_SERVICES=0 bun src/repro.ts"
+  },
+  "dependencies": {
+    "rivetkit": "3.1.1"
+  },
+  "devDependencies": {
+    "@standard-schema/spec": "1.1.0",
+    "@types/bun": "1.4.5",
+    "typescript": "5.9.3"
+  }
+}
