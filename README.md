@@ -64,12 +64,12 @@ pub(super) async fn observe_applied(&self, state: &State, deadline: u64) {
 }
 ```
 
-With it, the first probe (at ~600 commits) raises the observed position to the maintainer's
-(`applied_after=569`, in ~0.4 ms), the floor moves and the held layers are released; there are no
-refusals. I tested it on this repro, on 6,000 back-to-back commits in my own app (max 37 ms, no
-refusals), and with my app's test suite (647 tests) on the patched engine. Built from the 3.1.1
-source with the workspace's release settings, but without fat LTO (`lto = false`,
-`codegen-units = 64`).
+The same change is in open PR [rivet-dev/rivet#5963](https://github.com/rivet-dev/rivet/pull/5963),
+which I found after making it, with unit tests. With it, the first probe (at commit 804 in a traced
+run) raises the observed position from 0 to 759 in 0.6 ms, the floor moves and the held layers are
+released; there are no refusals. At 6,000 back-to-back keystrokes, stock stalls once (1,019 ms) and
+the patched engine's slowest keystroke is 24 ms. Built from the 3.1.1 source with the workspace's
+release settings, but without fat LTO (`lto = false`, `codegen-units = 64`).
 
 ## Results
 
@@ -92,10 +92,7 @@ In this repro the stall needs 1,024 commits before the volume's first move to co
 the empty snapshot on its own; then the probe works. Back to back (~300–400 commits/s) and at
 250/s it stalls every time; at 60 and 120/s the move to cold comes first (around commit 300) and
 it doesn't (`results/trace-rescued-by-cold-move.txt` shows that path: `cold=289`, then a probe
-that raises `applied` from 0 to 906). In my app, with bigger transactions (~13 KB of pages per
-commit), it stalled at about 30, 57 and 110 commits/s on a three-node deployment (engine 3.1.1, S3 cold
-storage, gp3), every time, at commit 1,025: there the first move to cold hadn't come 34 s in. I
-haven't pinned down why it comes so much later there.
+that raises `applied` from 0 to 906).
 
 ## Run it
 
